@@ -8,6 +8,8 @@ services:
     autoDeploy: true
     healthCheckPath: /docs
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
       - key: APP_ENV
         value: prod
       - key: PUBLIC_BASE_URL
