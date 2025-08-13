@@ -179,12 +179,6 @@ def _manager_emails(db: Session) -> list[str]:
 # -----------------------------------------
 router = APIRouter(prefix="/booking", tags=["booking"])
 
-
-@router.on_event("startup")
-def create_tables():
-    Base.metadata.create_all(bind=engine)
-
-
 # -----------------------------------------------------------------------------
 # AVAILABILITY (gli utenti autenticati vedono gli slot dei manager)
 # -----------------------------------------------------------------------------

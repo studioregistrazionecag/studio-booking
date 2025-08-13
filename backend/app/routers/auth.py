@@ -15,10 +15,6 @@ from ..schemas.auth import ForgotIn, ResetIn
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.on_event("startup")
-def create_tables():
-    Base.metadata.create_all(bind=engine)
-
 @router.post("/register", response_model=UserOut)
 def register(payload: RegisterIn, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == payload.email).first():
