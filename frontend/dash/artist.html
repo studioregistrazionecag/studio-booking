@@ -1,23 +1,37 @@
 <!doctype html>
 <html lang="it">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Area Artista</title>
-    <link rel="stylesheet" href="/frontend/assets/styles.css">
-    <script src="/frontend/assets/ui.js"></script>
-  </head>
-  <body>
-    <div class="page">
-      <header class="masthead"><img src="/frontend/assets/logo.png" class="logo-center" alt="logo" />
-        <div class="hello-row">
-          <div id="hello" class="hello">Ciao</div><button class="btn btn-gold" onclick="logout()">Logout</button>
-        </div>
-        <hr class="mast-sep">
-      </header>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Area Artista</title>
+  <link rel="stylesheet" href="/frontend/assets/styles.css">
+  <script src="/frontend/assets/ui.js"></script>
+  <link rel="icon" type="image/x-icon" href="/frontend/assets/favicon.ico">
+</head>
+<body>
+  <header class="masthead">
+    <img src="/frontend/assets/logo.png" class="logo-center" alt="logo" />
+    <div class="hello-row">
+      <div id="hello" class="hello">Ciao</div>
+      <button class="btn btn-gold" onclick="logout()">Logout</button>
+    </div>
+    <div class="hero-separator"></div>
+  </header>
+
+  <div class="page">
+      <!-- SEZIONE: Slot disponibili -->
       <section class="card">
         <h3>Slot disponibili</h3>
-        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap"><label class="label">Produttore<br><select id="producer" class="input" style="min-width:220px"></select></label><button class="btn btn-gold" id="reload">Ricarica slot</button></div>
+
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+          <label class="label">
+            Produttore<br>
+            <select id="producer" class="input" style="min-width:220px"></select>
+          </label>
+
+        <button class="btn btn-gold" id="reload">Ricarica slot</button>
+        </div>
+
         <table id="slotsTbl" class="table">
           <thead>
             <tr>
@@ -28,12 +42,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td colspan="4" class="muted">Caricamento…</td>
-            </tr>
+            <tr><td colspan="4" class="muted">Caricamento…</td></tr>
           </tbody>
         </table>
       </section>
+
+      <!-- SEZIONE: Agenda confermate -->
       <section class="card">
         <h3>Agenda confermate</h3>
         <table id="agendaTable" class="table">
@@ -47,13 +61,12 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td colspan="5" class="muted">Caricamento…</td>
-            </tr>
+            <tr><td colspan="5" class="muted">Caricamento…</td></tr>
           </tbody>
         </table>
       </section>
-    </div>
+
+
     <!-- Modale -->
     <div id="app-modal" class="modale nascosta" aria-hidden="true">
       <div class="modale__sfondo" data-chiudi="true"></div>
@@ -66,6 +79,7 @@
         </div>
       </div>
     </div>
+  </div>
     <script>
       const API = location.origin;
       const token = localStorage.getItem('token');
@@ -233,6 +247,7 @@
           ui.avviso(j?.detail || 'Errore durante la disdetta');
         }
       }
-    </script>undefined
-  </body>undefined
+    </script>
+  <script src="/frontend/assets/common-hello.js"></script>
+</body>
 </html>

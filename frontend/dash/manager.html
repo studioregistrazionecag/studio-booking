@@ -1,22 +1,24 @@
 <!doctype html>
 <html lang="it">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Dashboard Manager</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Area Manager</title>
   <link rel="stylesheet" href="/frontend/assets/styles.css">
   <script src="/frontend/assets/ui.js"></script>
+  <link rel="icon" type="image/x-icon" href="/frontend/assets/favicon.ico">
 </head>
-<body>
-  <div class="page">
+  <body>
     <header class="masthead">
       <img src="/frontend/assets/logo.png" class="logo-center" alt="logo" />
       <div class="hello-row">
         <div id="hello" class="hello">Ciao</div>
         <button class="btn btn-gold" onclick="logout()">Logout</button>
       </div>
-      <hr class="mast-sep">
+      <div class="hero-separator"></div>
     </header>
+
+  <div class="page">
 
     <section class="card">
       <h3>Slot studio (apertura manager)</h3>
@@ -57,7 +59,7 @@
         <a class="btn btn-gold" href="https://console.neon.tech" target="_blank" rel="noopener">Apri Neon Console</a>
       </div>
     </section>
-  </div>
+
 
   <!-- Modale -->
   <div id="app-modal" class="modale nascosta" aria-hidden="true">
@@ -70,6 +72,7 @@
         <button id="modale-ok" class="btn btn-gold">OK</button>
       </div>
     </div>
+  </div>
   </div>
 
   <script>
@@ -196,5 +199,6 @@
 
   loadSlots(); loadBookings(); loadAgenda();
   </script>
-</body>
+    <script src="/frontend/assets/common-hello.js"></script>
+  </body>
 </html>
