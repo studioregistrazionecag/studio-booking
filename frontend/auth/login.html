@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Accedi — Studio Booking</title>
+    <link rel="stylesheet" href="/frontend/assets/styles.css">
+    <script src="/frontend/assets/ui.js"></script>
+  </head>
+  <body>
+    <div class="page"><img src="/frontend/assets/logo.png" class="logo-center" alt="logo">
+      <hr class="mast-sep">
+      <div class="card form">
+        <h1>Accedi</h1>
+        <p class="muted">Inserisci le tue credenziali per continuare.</p>
+        <div class="grid-1">
+          <div class="field"><label class="label" for="email">Email</label>
+            <div class="input-group"><input id="email" class="input" type="email" placeholder="you@example.com" autocomplete="email"></div>
+          </div>
+          <div class="field"><label class="label" for="pwd">Password</label>
+            <div class="input-group"><input id="pwd" class="input has-eye" type="password" placeholder="Password" autocomplete="current-password"><button type="button" class="eye" aria-label="Mostra password" onclick="togglePwd('pwd', this)">👁</button></div>
+          </div>
+          <div class="actions"><button class="btn btn-gold full" id="btnLogin">Accedi</button></div>
+          <div class="form-footer"><a href="/frontend/auth/forgot.html">Password dimenticata?</a><a href="/frontend/auth/register.html">Crea account</a></div>
+        </div>
+      </div>
+    </div>
+    <!-- Modale -->
+    <div id="app-modal" class="modale nascosta" aria-hidden="true">
+      <div class="modale__sfondo" data-chiudi="true"></div>
+      <div class="modale__pannello" role="dialog" aria-modal="true" aria-labelledby="modale-titolo">
+        <h3 id="modale-titolo" class="modale__titolo">Messaggio</h3>
+        <p id="modale-testo" class="modale__testo"></p>
+        <div class="modale__azioni">
+          <button id="modale-annulla" class="btn" style="display:none">Annulla</button>
+          <button id="modale-ok" class="btn btn-gold">OK</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      const API = location.origin;
+
+      function togglePwd(id, btn) {
+        const i = document.getElementById(id);
+        i.type = i.type === 'password' ? 'text' : 'password';
+        btn.textContent = i.type === 'password' ? '👁' : '🙈';
+      }
+      async function doLogin() {
+        const email = document.getElementById('email').value.trim();
+        const pwd = document.getElementById('pwd').value.trim();
+        if (!email || !pwd) {
+          return ui.avviso('Inserisci email e password.');
+        }
+        const r = await fetch(`${API}/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email,
+            password: pwd
+          })
+        });
+        const data = await r.json().catch(() => null);
+        if (!r.ok) return ui.avviso(data?.detail || 'Credenziali non valide');
+        localStorage.setItem('token', data.access_token);
+        // ridirigi in base al ruolo
+        const me = await fetch(`${API}/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${data.access_token}`
+          }
+        }).then(x => x.json()).catch(() => null);
+        if (me?.role === 'MANAGER') location.href = '/frontend/dash/manager.html';
+        else if (me?.role === 'PRODUCER') location.href = '/frontend/dash/producer.html';
+        else location.href = '/frontend/dash/artist.html';
+      }
+      document.getElementById('btnLogin').onclick = doLogin;
+      document.getElementById('pwd').addEventListener('keydown', e => {
+        if (e.key === 'Enter') doLogin();
+      });
+    </script>undefined
+  </body>undefined
+</html>

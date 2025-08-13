@@ -1,0 +1,138 @@
+:root{
+  --bg:#0b0a13;
+  --panel:#12131c;
+  --panel-2:#0f1017;
+  --text:#f2f3f5;
+  --muted:#b6b9c3;
+  --gold:#d4af37;
+  --gold-20: rgba(212,175,55,.20);
+  --gold-35: rgba(212,175,55,.35);
+  --violet:#7c3aed;
+  --danger:#ff6b6b;
+  --success:#31d07d;
+  --radius-xl:18px;
+  --radius-lg:14px;
+  --radius-md:12px;
+  --shadow:0 18px 50px rgba(0,0,0,.35);
+}
+
+/* ---------- base ---------- */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:
+    radial-gradient(1200px 800px at 80% -10%, rgba(124,58,237,.20), transparent),
+    radial-gradient(1000px 600px at -10% 110%, rgba(212,175,55,.12), transparent),
+    var(--bg);
+  background-attachment:fixed;     /* evita il “gradiente spezzato” */
+  display:flex; flex-direction:column;
+  min-height:100vh;
+}
+
+/* spazio generale pagina */
+.page{width:100%; max-width:980px; margin:24px auto; padding:0 14px}
+
+/* ---------- header comune ---------- */
+.logo-center{
+  width:54px;height:54px;border-radius:14px;display:block;margin:10px auto 12px;
+  box-shadow:0 0 28px var(--gold-35); background:#000; object-fit:cover;
+}
+.mast-sep{height:3px;border:0;background:linear-gradient(90deg, var(--gold), transparent);border-radius:999px; opacity:.6; margin:6px auto 20px; max-width:680px}
+.hello-row{display:flex;align-items:center;gap:12px;justify-content:center;margin:-2px 0 8px}
+.hello{font-weight:800}
+.btn{padding:10px 14px;border-radius:12px;border:1px solid var(--gold-20);background:#1a1a22;color:#fff;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn-gold{background:linear-gradient(90deg,#f4d676,#d4af37);border:none;color:#111;font-weight:800;box-shadow:0 10px 24px rgba(212,175,55,.25)}
+.btn-ghost{background:#222;border-color:#2a2a2a}
+
+/* ---------- card / blocchi ---------- */
+.card{
+  background:linear-gradient(180deg,#141522 0%, #0f1017 100%);
+  border:1px solid var(--gold-20);
+  border-radius:var(--radius-xl);
+  padding:16px;
+  box-shadow:var(--shadow);
+  margin:14px 0;
+}
+.card h1,.card h2,.card h3{margin:0 0 10px}
+.muted{color:var(--muted)}
+
+/* ---------- form ---------- */
+.form{
+  width:100%; max-width:680px; margin:0 auto;
+}
+.grid-1{display:grid; gap:12px}
+.field{display:flex; flex-direction:column; gap:6px}
+.label{color:#d7d9e0; font-weight:600}
+.input-group{position:relative}
+.input{
+  width:100%; background:var(--panel-2); color:var(--text);
+  border:1px solid var(--gold-20); border-radius:14px;
+  padding:12px 14px; font-size:16px; outline:none;
+}
+.input:focus{box-shadow:0 0 0 2px rgba(124,58,237,.25); border-color:#8d5bff}
+.input.has-eye{padding-right:44px}
+.eye{
+  position:absolute; right:8px; top:50%; transform:translateY(-50%);
+  width:36px;height:36px;border-radius:12px;
+  background:#1d1f28;border:1px solid #2a2a34;display:grid;place-items:center;cursor:pointer;
+}
+.actions{display:flex; gap:10px; align-items:center; justify-content:center; margin-top:8px}
+
+/* link riga inferiore form */
+.form-footer{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:10px}
+a{color:#8db3ff; text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ---------- tabelle dashboard ---------- */
+.table{width:100%; border-collapse:collapse}
+.table th,.table td{padding:12px 10px; border-bottom:1px solid rgba(255,255,255,.06); text-align:left}
+.badge{display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:10px; font-weight:700; font-size:.85rem}
+.badge-free{background:rgba(49,208,125,.14); border:1px solid rgba(49,208,125,.3); color:#31d07d}
+.badge-busy{background:rgba(255,80,80,.14); border:1px solid rgba(255,80,80,.3); color:#ff6b6b}
+.badge-pending{background:rgba(212,175,55,.14); border:1px solid rgba(212,175,55,.35); color:#efcf76}
+
+/* lista approvazioni compatta */
+.approv-list{display:grid; gap:10px}
+.approv-item{
+  display:grid; grid-template-columns:1fr auto;
+  gap:10px; align-items:center;
+  background:#10121a; border:1px solid rgba(255,255,255,.07);
+  border-radius:14px; padding:12px 12px;
+}
+.approv-who{display:flex; flex-direction:column; gap:2px}
+.approv-slot{color:#dfe2ea; font-weight:700}
+.approv-actions{display:flex; gap:8px; flex-direction:column}
+@media(min-width:560px){ .approv-actions{flex-direction:row} }
+
+/* ---------- modale (ui.js) ---------- */
+.modale.nascosta{display:none}
+.modale{position:fixed; inset:0; z-index:90}
+.modale__sfondo{
+  position:absolute; inset:0; backdrop-filter:blur(6px);
+  background:rgba(0,0,0,.45);
+  opacity:0; transition:opacity .2s ease;
+}
+.modale.mostra .modale__sfondo{opacity:1}
+.modale__pannello{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-45%);
+  width:min(92vw,560px);
+  background:linear-gradient(180deg,#141623,#0f1118);
+  border:1px solid var(--gold-20);
+  border-radius:16px; padding:18px; box-shadow:var(--shadow);
+  opacity:0; translate:0 8px; transition:opacity .2s ease, translate .2s ease;
+}
+.modale.mostra .modale__pannello{opacity:1; translate:0 0}
+.modale__titolo{margin:0 0 8px}
+.modale__testo{margin:0 0 14px; color:#e3e5ea}
+.modale__azioni{display:flex; gap:10px; justify-content:flex-end}
+
+/* ---------- helpers ---------- */
+.center{display:grid; place-items:center}
+.full{width:100%}
+
+/* ---------- buttons in table cells ---------- */
+.btn-table{padding:8px 12px; border-radius:12px}

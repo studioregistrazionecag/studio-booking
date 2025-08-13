@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Recupera password — Studio Booking</title>
+    <link rel="stylesheet" href="/frontend/assets/styles.css">
+    <script src="/frontend/assets/ui.js"></script>
+  </head>
+  <body>
+    <div class="page"><img src="/frontend/assets/logo.png" class="logo-center" alt="logo">
+      <hr class="mast-sep">
+      <div class="card form">
+        <h1>Recupera password</h1>
+        <p class="muted">Inserisci l'email del tuo account. Ti invieremo un link per reimpostare la password.</p>
+        <div class="grid-1">
+          <div class="field"><label class="label" for="email">Email</label>
+            <div class="input-group"><input id="email" class="input" type="email" placeholder="you@example.com"></div>
+          </div>
+          <div class="actions"><button class="btn btn-gold full" id="btnSend">Invia link</button></div>
+          <div class="form-footer"><a href="/frontend/auth/login.html">Torna al login</a></div>
+        </div>
+      </div>
+    </div>
+    <!-- Modale -->
+    <div id="app-modal" class="modale nascosta" aria-hidden="true">
+      <div class="modale__sfondo" data-chiudi="true"></div>
+      <div class="modale__pannello" role="dialog" aria-modal="true" aria-labelledby="modale-titolo">
+        <h3 id="modale-titolo" class="modale__titolo">Messaggio</h3>
+        <p id="modale-testo" class="modale__testo"></p>
+        <div class="modale__azioni">
+          <button id="modale-annulla" class="btn" style="display:none">Annulla</button>
+          <button id="modale-ok" class="btn btn-gold">OK</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      const API = location.origin;
+      async function send() {
+        const email = document.getElementById('email').value.trim();
+        if (!email) return ui.avviso('Inserisci la tua email.');
+        const r = await fetch(`${API}/auth/forgot`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email
+          })
+        });
+        await ui.avviso('Se l’email è registrata, riceverai un link di reset.');
+        location.href = '/frontend/auth/login.html';
+      }
+      document.getElementById('btnSend').onclick = send;
+    </script>undefined
+  </body>undefined
+</html>

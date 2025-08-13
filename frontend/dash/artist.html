@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Area Artista</title>
+    <link rel="stylesheet" href="/frontend/assets/styles.css">
+    <script src="/frontend/assets/ui.js"></script>
+  </head>
+  <body>
+    <div class="page">
+      <header class="masthead"><img src="/frontend/assets/logo.png" class="logo-center" alt="logo" />
+        <div class="hello-row">
+          <div id="hello" class="hello">Ciao</div><button class="btn btn-gold" onclick="logout()">Logout</button>
+        </div>
+        <hr class="mast-sep">
+      </header>
+      <section class="card">
+        <h3>Slot disponibili</h3>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap"><label class="label">Produttore<br><select id="producer" class="input" style="min-width:220px"></select></label><button class="btn btn-gold" id="reload">Ricarica slot</button></div>
+        <table id="slotsTbl" class="table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Ora</th>
+              <th>Stato</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="4" class="muted">Caricamento…</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section class="card">
+        <h3>Agenda confermate</h3>
+        <table id="agendaTable" class="table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Ora</th>
+              <th>Artista</th>
+              <th>Producer</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="5" class="muted">Caricamento…</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+    <!-- Modale -->
+    <div id="app-modal" class="modale nascosta" aria-hidden="true">
+      <div class="modale__sfondo" data-chiudi="true"></div>
+      <div class="modale__pannello" role="dialog" aria-modal="true" aria-labelledby="modale-titolo">
+        <h3 id="modale-titolo" class="modale__titolo">Messaggio</h3>
+        <p id="modale-testo" class="modale__testo"></p>
+        <div class="modale__azioni">
+          <button id="modale-annulla" class="btn" style="display:none">Annulla</button>
+          <button id="modale-ok" class="btn btn-gold">OK</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      const API = location.origin;
+      const token = localStorage.getItem('token');
+      if (!token) location.href = '/frontend/auth/login.html';
+      const auth = {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      function logout() {
+        localStorage.removeItem('token');
+        location.href = '/frontend/auth/login.html';
+      }
+      (async function me() {
+        const r = await fetch(`${API}/auth/me`, {
+          headers: auth
+        });
+        if (!r.ok) return location.href = '/frontend/auth/login.html';
+        const u = await r.json();
+        if (u.role === 'PRODUCER') location.href = '/frontend/dash/producer.html';
+        if (u.role === 'MANAGER') location.href = '/frontend/dash/manager.html';
+        if (u?.display_name) document.getElementById('hello').textContent = `Ciao, ${u.display_name}`;
+      })();
+      const safe = (s) => (s ?? '').toString();
+      const dateFmt = (iso) => {
+        if (!iso) return '';
+        const [y, m, d] = iso.split('-').map(Number);
+        const dt = new Date(y, (m || 1) - 1, d || 1);
+        return new Intl.DateTimeFormat('it-IT', {
+          day: '2-digit',
+          month: 'long',
+          year: '2-digit'
+        }).format(dt);
+      };
+      const timeFmt = (t) => safe(t).slice(0, 5);
+      const statusBadge = (st) => {
+        switch (st) {
+          case 'LIBERO':
+            return `
+	<span class="badge badge-free">
+		<span style="width:8px;height:8px;border-radius:50%;background:var(--success)"></span>Libero
+	</span>`;
+          case 'OCCUPATO':
+            return `
+	<span class="badge badge-busy">Occupato</span>`;
+          case 'IN_SOSPESO':
+            return `
+	<span class="badge badge-pending">⏳ In attesa</span>`;
+          default:
+            return safe(st);
+        }
+      };
+      async function loadProducers() {
+        const r = await fetch(`${API}/users?role=PRODUCER`, {
+          headers: auth
+        });
+        const arr = r.ok ? await r.json() : [];
+        const sel = document.getElementById('producer');
+        sel.innerHTML = `
+	<option value="">Seleziona un produttore…</option>` + arr.map(p => `
+	<option value="${p.id}">${p.display_name||p.email}</option>`).join('');
+      }
+      loadProducers();
+      async function loadSlots() {
+        const r = await fetch(`${API}/booking/availability`, {
+          headers: auth
+        });
+        const data = r.ok ? await r.json() : [];
+        const tb = document.querySelector('#slotsTbl tbody');
+        tb.innerHTML = '';
+        if (!data.length) {
+          tb.innerHTML = `
+	<tr>
+		<td colspan="4" class="muted">Nessuno slot</td>
+	</tr>`;
+          return;
+        }
+        data.forEach(s => {
+          const tr = document.createElement('tr');
+          const disabled = s.status !== 'LIBERO';
+          tr.innerHTML = `
+
+	<td>${dateFmt(s.date)}</td>
+	<td>${timeFmt(s.start_time)} – ${timeFmt(s.end_time)}</td>
+	<td>${statusBadge(s.status)}</td>
+	<td>
+		<button class="btn btn-ghost btn-table" ${disabled?'disabled':''} onclick="book(${s.id})">Prenota</button>
+	</td>
+      `;
+          tb.appendChild(tr);
+        });
+      }
+      loadSlots();
+      document.getElementById('reload')?.addEventListener('click', loadSlots);
+      async function book(slot_id) {
+        const producer_id = Number(document.getElementById('producer').value);
+        if (!producer_id) {
+          ui.avviso('Seleziona un produttore');
+          return;
+        }
+        const r = await fetch(`${API}/booking`, {
+          method: 'POST',
+          headers: auth,
+          body: JSON.stringify({
+            slot_id,
+            producer_id
+          })
+        });
+        if (r.ok) {
+          await ui.avviso('Richiesta inviata al produttore');
+          loadSlots();
+        } else {
+          const j = await r.json().catch(() => null);
+          ui.avviso(j?.detail || 'Errore');
+        }
+      }
+      async function loadAgenda() {
+        const r = await fetch(`${API}/booking/agenda/confirmed`, {
+          headers: auth
+        });
+        const data = r.ok ? await r.json() : [];
+        const tb = document.querySelector('#agendaTable tbody');
+        tb.innerHTML = '';
+        if (!data.length) {
+          tb.innerHTML = `
+	<tr>
+		<td colspan="5" class="muted">Nessuna prenotazione confermata</td>
+	</tr>`;
+          return;
+        }
+        data.forEach(it => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+
+	<td>${dateFmt(it.date)}</td>
+	<td>${timeFmt(it.start_time)}</td>
+	<td>${it.artist_name}</td>
+	<td>${it.producer_name}</td>
+	<td>
+		<button class="btn btn-ghost btn-table" onclick="cancelArtist(${it.id}, '${dateFmt(it.date)} ${timeFmt(it.start_time)}')">Disdici</button>
+	</td>
+      `;
+          tb.appendChild(tr);
+        });
+      }
+      loadAgenda();
+      async function cancelArtist(bookingId, whenLabel) {
+        const ok = await ui.conferma(`Confermi di disdire la prenotazione del
+	<b>${whenLabel}</b>?`, {
+          intestazione: 'Disdici prenotazione',
+          testoOk: 'Disdici',
+          testoAnnulla: 'Annulla'
+        });
+        if (!ok) return;
+        const r = await fetch(`${API}/booking/${bookingId}/artist/cancel`, {
+          method: 'POST',
+          headers: auth
+        });
+        if (r.ok) {
+          await ui.avviso('Prenotazione disdetta.');
+          loadAgenda();
+          loadSlots();
+        } else {
+          const j = await r.json().catch(() => null);
+          ui.avviso(j?.detail || 'Errore durante la disdetta');
+        }
+      }
+    </script>undefined
+  </body>undefined
+</html>

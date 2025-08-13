@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Area Producer</title>
+    <link rel="stylesheet" href="/frontend/assets/styles.css">
+    <script src="/frontend/assets/ui.js"></script>
+  </head>
+  <body>
+    <div class="page">
+      <header class="masthead"><img src="/frontend/assets/logo.png" class="logo-center" alt="logo" />
+        <div class="hello-row">
+          <div id="hello" class="hello">Ciao</div><button class="btn btn-gold" onclick="logout()">Logout</button>
+        </div>
+        <hr class="mast-sep">
+      </header>
+      <section class="card">
+        <h3>Richieste in arrivo</h3>
+        <div id="incomingBox" class="muted">Caricamento…</div>
+      </section>
+      <section class="card">
+        <h3>Agenda confermate</h3>
+        <table id="agenda" class="table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Ora</th>
+              <th>Artista</th>
+              <th>Producer</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="5" class="muted">Caricamento…</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+    <!-- Modale -->
+    <div id="app-modal" class="modale nascosta" aria-hidden="true">
+      <div class="modale__sfondo" data-chiudi="true"></div>
+      <div class="modale__pannello" role="dialog" aria-modal="true" aria-labelledby="modale-titolo">
+        <h3 id="modale-titolo" class="modale__titolo">Messaggio</h3>
+        <p id="modale-testo" class="modale__testo"></p>
+        <div class="modale__azioni">
+          <button id="modale-annulla" class="btn" style="display:none">Annulla</button>
+          <button id="modale-ok" class="btn btn-gold">OK</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      const API = location.origin;
+      const auth = {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      };
+      if (!localStorage.getItem('token')) location.href = '/frontend/auth/login.html';
+
+      function logout() {
+        localStorage.removeItem('token');
+        location.href = '/frontend/auth/login.html';
+      }
+      (async function hello() {
+        const r = await fetch(`${API}/auth/me`, {
+          headers: auth
+        });
+        const u = r.ok ? await r.json() : null;
+        if (u?.display_name) document.getElementById('hello').textContent = `Ciao, ${u.display_name}`;
+      })();
+      const safe = (s) => (s ?? '').toString();
+      const dateFmt = (iso) => {
+        if (!iso) return '';
+        const [y, m, d] = iso.split('-').map(Number);
+        const dt = new Date(y, (m || 1) - 1, d || 1);
+        return new Intl.DateTimeFormat('it-IT', {
+          day: '2-digit',
+          month: 'long',
+          year: '2-digit'
+        }).format(dt);
+      };
+      const timeFmt = (t) => safe(t).slice(0, 5);
+      async function loadIncoming() {
+          const box = document.getElementById('incomingBox');
+          box.innerHTML = ' < div class = "muted" > Caricamento… < /div>';
+          const r = await fetch(`${API}/booking/producer/incoming`, {
+            headers: auth
+          });
+          const arr = r.ok ? await r.json() : [];
+          if (!arr.length) {
+            box.innerHTML = ' < div class = "muted" > Nessuna richiesta < /div>'; return; }
+            box.innerHTML = arr.map(b => `
+
+	<div class="approv-item" style="grid-template-columns:1fr auto">
+		<div>
+			<div style="font-weight:800">${b.artist_name||('artista #'+b.artist_id)}</div>
+			<div class="muted">${dateFmt(b.date)} ${timeFmt(b.start_time)}–${timeFmt(b.end_time)}</div>
+		</div>
+		<div class="approv-actions">
+			<button class="btn btn-gold" onclick="act(${b.id},'accept')">Accetta</button>
+			<button class="btn btn-ghost" onclick="act(${b.id},'reject')">Rifiuta</button>
+		</div>
+	</div>
+    `).join('');
+          }
+          async function act(id, what) {
+            const url = what === 'accept' ? `${API}/booking/${id}/producer/accept` : `${API}/booking/${id}/producer/reject`;
+            const r = await fetch(url, {
+              method: 'POST',
+              headers: auth
+            });
+            if (r.ok) {
+              await loadIncoming();
+              await loadAgenda();
+            } else {
+              const j = await r.json().catch(() => null);
+              ui.avviso(j?.detail || 'Errore');
+            }
+          }
+          async function loadAgenda() {
+            const r = await fetch(`${API}/booking/agenda/confirmed`, {
+              headers: auth
+            });
+            const data = r.ok ? await r.json() : [];
+            const tb = document.querySelector('#agenda tbody');
+            tb.innerHTML = '';
+            if (!data.length) {
+              tb.innerHTML = ' < tr > < td colspan = "5"
+              class = "muted" > Nessuna prenotazione confermata < /td> < /tr>'; return;
+            }
+            data.forEach(x => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+
+	<td>${dateFmt(x.date)}</td>
+	<td>${timeFmt(x.start_time)}</td>
+	<td>${x.artist_name}</td>
+	<td>${x.producer_name}</td>
+	<td>
+		<button class="btn btn-ghost btn-table" onclick="cancelProducer(${x.id}, '${dateFmt(x.date)} ${timeFmt(x.start_time)}')">Disdici</button>
+	</td>
+      `;
+              tb.appendChild(tr);
+            });
+          }
+          async function cancelProducer(bookingId, whenLabel) {
+            const ok = await ui.conferma(`Confermi di disdire la prenotazione del
+	<b>${whenLabel}</b>?`, {
+              intestazione: 'Disdici prenotazione',
+              testoOk: 'Disdici',
+              testoAnnulla: 'Annulla'
+            });
+            if (!ok) return;
+            const r = await fetch(`${API}/booking/${bookingId}/producer/cancel`, {
+              method: 'POST',
+              headers: auth
+            });
+            if (r.ok) {
+              await ui.avviso('Prenotazione disdetta.');
+              loadAgenda();
+            } else {
+              const j = await r.json().catch(() => null);
+              ui.avviso(j?.detail || 'Errore durante la disdetta');
+            }
+          }
+          loadIncoming();
+          loadAgenda();
+    </script>undefined
+  </body>undefined
+</html>

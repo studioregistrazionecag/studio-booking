@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Titolo pagina</title>
+  <link rel="stylesheet" href="/web/styles.css">
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="dot"></div>
+      <div>
+        <h1>Titolo pagina</h1>
+        <p class="sub">Sottotitolo descrittivo</p>
+      </div>
+    </div>
+
+    <!-- QUI IL CONTENUTO PAGINA -->
+    <div class="msg" id="msg"></div>
+    <div class="foot"><a class="link" href="/web/login.html">Torna al login</a></div>
+  </div>
+
+  <script>
+    // helper per messaggi senza emoji
+    function setMsg(text, ok=false){
+      const el = document.getElementById('msg');
+      el.className = 'msg ' + (ok ? 'ok' : 'err');
+      el.textContent = text;
+    }
+  </script>
+</body>
+</html>

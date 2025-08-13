@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reimposta password — Studio Booking</title>
+    <link rel="stylesheet" href="/frontend/assets/styles.css">
+    <script src="/frontend/assets/ui.js"></script>
+  </head>
+  <body>
+    <div class="page"><img src="/frontend/assets/logo.png" class="logo-center" alt="logo">
+      <hr class="mast-sep">
+      <div class="card form">
+        <h1>Reimposta password</h1>
+        <div class="grid-1">
+          <div class="field"><label class="label" for="p1">Nuova password</label>
+            <div class="input-group"><input id="p1" class="input has-eye" type="password" placeholder="Nuova password"><button class="eye" onclick="togglePwd('p1',this)">👁</button></div>
+          </div>
+          <div class="field"><label class="label" for="p2">Conferma password</label>
+            <div class="input-group"><input id="p2" class="input has-eye" type="password" placeholder="Conferma password"><button class="eye" onclick="togglePwd('p2',this)">👁</button></div>
+          </div>
+          <div class="muted">Minimo 8 caratteri.</div>
+          <div class="actions"><button class="btn btn-gold full" id="btn">Aggiorna password</button></div>
+          <div class="form-footer"><a href="/frontend/auth/login.html">Torna al login</a></div>
+        </div>
+      </div>
+    </div>
+    <!-- Modale -->
+    <div id="app-modal" class="modale nascosta" aria-hidden="true">
+      <div class="modale__sfondo" data-chiudi="true"></div>
+      <div class="modale__pannello" role="dialog" aria-modal="true" aria-labelledby="modale-titolo">
+        <h3 id="modale-titolo" class="modale__titolo">Messaggio</h3>
+        <p id="modale-testo" class="modale__testo"></p>
+        <div class="modale__azioni">
+          <button id="modale-annulla" class="btn" style="display:none">Annulla</button>
+          <button id="modale-ok" class="btn btn-gold">OK</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      const API = location.origin;
+
+      function togglePwd(id, btn) {
+        const i = document.getElementById(id);
+        i.type = i.type === 'password' ? 'text' : 'password';
+        btn.textContent = i.type === 'password' ? '👁' : '🙈';
+      }
+      const params = new URLSearchParams(location.search);
+      const token = params.get('token');
+      document.getElementById('btn').onclick = async () => {
+        if (!token) return ui.avviso('Token mancante o non valido.');
+        const p1 = document.getElementById('p1').value.trim();
+        const p2 = document.getElementById('p2').value.trim();
+        if (!p1 || !p2) return ui.avviso('Inserisci e conferma la nuova password.');
+        if (p1 !== p2) return ui.avviso('Le password non coincidono.');
+        if (p1.length < 8) return ui.avviso('La password deve avere almeno 8 caratteri.');
+        const r = await fetch(`${API}/auth/reset`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            token,
+            new_password: p1
+          })
+        });
+        const data = await r.json().catch(() => null);
+        if (!r.ok) return ui.avviso(data?.detail || 'Errore durante la reimpostazione');
+        await ui.avviso('Password aggiornata. Ora puoi accedere.');
+        location.href = '/frontend/auth/login.html';
+      };
+    </script>undefined
+  </body>undefined
+</html>

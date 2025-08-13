@@ -1,0 +1,33 @@
+# --- CREDENZIALI & CONFIG PRIVATE ---
+.env
+secrets/
+client_secret.json
+oauth_bootstrap.py
+
+# --- PYTHON ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# --- EDITOR ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- SISTEMA ---
+.DS_Store
+Thumbs.db
+
+# --- AMBIENTE VIRTUALE ---
+.venv/
+venv/
+ENV/
+env/
+
+# --- BUILD ---
+dist/
+build/
+*.egg-info/

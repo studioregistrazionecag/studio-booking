@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Dashboard Manager</title>
+  <link rel="stylesheet" href="/frontend/assets/styles.css">
+  <script src="/frontend/assets/ui.js"></script>
+</head>
+<body>
+  <div class="page">
+    <header class="masthead">
+      <img src="/frontend/assets/logo.png" class="logo-center" alt="logo" />
+      <div class="hello-row">
+        <div id="hello" class="hello">Ciao</div>
+        <button class="btn btn-gold" onclick="logout()">Logout</button>
+      </div>
+      <hr class="mast-sep">
+    </header>
+
+    <section class="card">
+      <h3>Slot studio (apertura manager)</h3>
+      <p class="muted">Crea slot orari di 1h in cui lo studio è aperto.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+        <input id="slotDate" class="input" type="date">
+        <input id="slotStart" class="input" type="time" step="3600" placeholder="09:00">
+        <input id="slotEnd" class="input" type="time" step="3600" placeholder="12:00">
+        <button class="btn btn-gold" onclick="addSlots()">Aggiungi slot 1h</button>
+      </div>
+      <div style="margin-top:10px">
+        <table id="slotsTbl" class="table">
+          <thead><tr><th>Data</th><th>Ora</th><th>Stato</th><th>Azioni</th></tr></thead>
+          <tbody><tr><td colspan="4" class="muted">Nessun slot</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Prenotazioni in approvazione</h3>
+      <div id="bookingsList" class="approv-list">
+        <div class="muted">Caricamento…</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Agenda confermate</h3>
+      <table id="agendaTable" class="table">
+        <thead><tr><th>Data</th><th>Ora</th><th>Artista</th><th>Producer</th></tr></thead>
+        <tbody><tr><td colspan="4" class="muted">Caricamento…</td></tr></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h3>Statistiche Neon</h3>
+      <div id="neonCard" class="muted">
+        <p class="muted" style="margin:.25rem 0 1rem 0;">Visualizza consumo compute/storage direttamente dalla console Neon.</p>
+        <a class="btn btn-gold" href="https://console.neon.tech" target="_blank" rel="noopener">Apri Neon Console</a>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modale -->
+  <div id="app-modal" class="modale nascosta" aria-hidden="true">
+    <div class="modale__sfondo" data-chiudi="true"></div>
+    <div class="modale__pannello" role="dialog" aria-modal="true" aria-labelledby="modale-titolo">
+      <h3 id="modale-titolo" class="modale__titolo">Messaggio</h3>
+      <p id="modale-testo" class="modale__testo"></p>
+      <div class="modale__azioni">
+        <button id="modale-annulla" class="btn" style="display:none">Annulla</button>
+        <button id="modale-ok" class="btn btn-gold">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  const API = location.origin;
+  const token = localStorage.getItem('token');
+  if(!token) location.href='/frontend/auth/login.html';
+  function authHeaders(){ return {Authorization:`Bearer ${token}`, 'Content-Type':'application/json'} }
+  function logout(){ localStorage.removeItem('token'); location.href='/frontend/auth/login.html' }
+
+  const safe = (s)=> (s ?? '').toString();
+  const dateFmt = (iso) => {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, (m || 1) - 1, d || 1);
+  return new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: 'long', year: '2-digit' })
+    .format(dt);
+};
+  const timeFmt = (t)=> safe(t).slice(0,5);
+  const statusBadge = (st)=>{
+    switch(st){
+      case 'LIBERO':     return `<span class="badge badge-free"><span style="width:8px;height:8px;border-radius:50%;background:var(--success)"></span>Libero</span>`;
+      case 'OCCUPATO':   return `<span class="badge badge-busy"><span style="width:8px;height:8px;border-radius:50%;background:#ff6b6b"></span>Occupato</span>`;
+      case 'IN_SOSPESO': return `<span class="badge badge-pending">⏳ In attesa</span>`;
+      default:           return safe(st);
+    }
+  };
+
+  (async function hello(){
+    const r = await fetch(`${API}/auth/me`, {headers:authHeaders()});
+    const u = r.ok ? await r.json() : null;
+    if(u?.display_name) document.getElementById('hello').textContent = `Ciao, ${u.display_name}`;
+  })();
+
+  // approvazioni compatte
+  async function loadBookings(){
+    const box = document.getElementById('bookingsList');
+    box.innerHTML = '<div class="muted">Caricamento…</div>';
+    const r = await fetch(`${API}/booking/manager/pending`, {headers:authHeaders()});
+    const data = r.ok ? await r.json() : [];
+    if(!data.length){ box.innerHTML = '<div class="muted">Nessuna prenotazione in attesa</div>'; return; }
+
+    box.innerHTML = '';
+    data.forEach(b=>{
+      const when = `${dateFmt(b.date)} · ${timeFmt(b.start_time)}`;
+      const el = document.createElement('div');
+      el.className = 'approv-item';
+      el.innerHTML = `
+        <div>
+          <div class="approv-who">
+            <div style="font-weight:800">${b.artist_name}</div>
+            <div class="muted">${b.producer_name}</div>
+          </div>
+          <div class="approv-slot">${when}</div>
+        </div>
+        <div class="approv-actions">
+          <button class="btn btn-gold" onclick="finalize(${b.id},'accept')">Conferma</button>
+          <button class="btn btn-ghost" onclick="finalize(${b.id},'reject')">Rifiuta</button>
+        </div>
+      `;
+      box.appendChild(el);
+    });
+  }
+
+  // Slots
+  async function addSlots(){
+    const d=document.getElementById('slotDate').value, s=document.getElementById('slotStart').value, e=document.getElementById('slotEnd').value;
+    if(!d||!s||!e){ ui.avviso('Inserisci data/ora'); return; }
+    const r = await fetch(`${API}/booking/manager/slots/bulk`, { method:'POST', headers:authHeaders(), body:JSON.stringify({date:d,start_time:s,end_time:e,step_minutes:60}) });
+    if(r.ok) loadSlots(); else ui.avviso('Errore aggiunta slot');
+  }
+  async function loadSlots(){
+  const r = await fetch(`${API}/booking/manager/slots`, {headers:authHeaders()});
+  let data = r.ok ? await r.json() : [];
+
+  data.sort((a, b) => {
+    const da = new Date(`${a.date}T${(a.start_time || '00:00')}:00Z`);
+    const db = new Date(`${b.date}T${(b.start_time || '00:00')}:00Z`);
+    return da - db;
+  });
+  const tb = document.querySelector('#slotsTbl tbody'); tb.innerHTML='';
+  if(!data.length){
+    tb.innerHTML='<tr><td colspan="4" class="muted">Nessun slot</td></tr>'; return;
+  }
+  data.forEach(x=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${dateFmt(x.date)}</td>
+      <td>${timeFmt(x.start_time)} – ${timeFmt(x.end_time)}</td>
+      <td>${statusBadge(x.status)}</td>
+      <td><button class="btn" onclick="delSlot(${x.id})">Elimina</button></td>
+    `;
+    tb.appendChild(tr);
+    });
+  }
+  async function delSlot(id){
+    const r = await fetch(`${API}/booking/manager/slots/${id}`, {method:'DELETE', headers:authHeaders()});
+    if(r.ok) loadSlots();
+  }
+
+  // Accetta/rifiuta
+  async function finalize(id, action){
+    const url = action==='accept'?`${API}/booking/${id}/manager/accept`:`${API}/booking/${id}/manager/reject`;
+    await fetch(url, {method:'POST', headers:authHeaders()});
+    loadBookings(); loadAgenda();
+  }
+
+  // Agenda
+  async function loadAgenda(){
+    const r = await fetch(`${API}/booking/agenda/confirmed`, {headers:authHeaders()});
+    const data = r.ok ? await r.json() : [];
+    const tb = document.querySelector('#agendaTable tbody'); tb.innerHTML='';
+    if(!data.length){ tb.innerHTML='<tr><td colspan="4" class="muted">Nessuna prenotazione confermata</td></tr>'; return; }
+    data.forEach(x=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${dateFmt(x.date)}</td>
+        <td>${timeFmt(x.start_time)}</td>
+        <td>${x.artist_name}</td>
+        <td>${x.producer_name}</td>
+      `;
+      tb.appendChild(tr);
+    });
+  }
+
+  loadSlots(); loadBookings(); loadAgenda();
+  </script>
+</body>
+</html>
