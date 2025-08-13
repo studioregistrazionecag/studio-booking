@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     NEON_API_KEY: str | None = None
     NEON_PROJECT_ID: str | None = None
 
+    # === NEW === Manutenzione
+    MAINTENANCE_MODE: bool = False  # se true, / e /login → pagina offline
+
     # Email manager (opzionale): CSV/; o newline. Se vuoto -> fallback ai manager nel DB.
     MANAGER_EMAILS: str | None = None
 

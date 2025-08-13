@@ -223,37 +223,69 @@ def manager_slots_bulk(
     if payload.step_minutes <= 0 or payload.step_minutes > 480:
         raise HTTPException(400, "step_minutes non valido")
 
+    # calcolo window
     start_dt = datetime.combine(payload.date, payload.start_time)
     end_dt = datetime.combine(payload.date, payload.end_time)
 
-    if payload.end_time == time(0, 0):  # 00:00 => giorno successivo
+    # 00:00 = giorno successivo
+    if payload.end_time == time(0, 0):
         end_dt += timedelta(days=1)
 
     if end_dt <= start_dt:
         raise HTTPException(400, "Fine deve essere dopo l'inizio")
 
     step = timedelta(minutes=payload.step_minutes)
-    created = 0
+
+    # costruisci la lista candidata di (start_time, end_time) nel giorno
+    candidates: list[tuple[time, time]] = []
     cur = start_dt
     while cur + step <= end_dt:
-        db.add(
+        st = cur.time()
+        et = (cur + step).time()
+        candidates.append((st, et))
+        cur += step
+
+    if not candidates:
+        raise HTTPException(400, "Nessuno slot generato")
+
+    # PRE-FILTRO: prendi gli slot esistenti per quel manager e giorno
+    existing = (
+        db.query(AvailabilitySlot.start_time, AvailabilitySlot.end_time)
+        .filter(
+            AvailabilitySlot.manager_id == me.id,
+            AvailabilitySlot.date == payload.date,
+            AvailabilitySlot.is_deleted == False,
+        )
+        .all()
+    )
+    existing_set = {(row[0], row[1]) for row in existing}
+
+    # inserisci solo i mancanti
+    to_insert: list[AvailabilitySlot] = []
+    skipped = 0
+    for st, et in candidates:
+        if (st, et) in existing_set:
+            skipped += 1
+            continue
+        to_insert.append(
             AvailabilitySlot(
                 manager_id=me.id,
                 date=payload.date,
-                start_time=cur.time(),
-                end_time=(cur + step).time(),
+                start_time=st,
+                end_time=et,
                 status=SlotStatus.LIBERO,
                 is_deleted=False,
             )
         )
-        created += 1
-        cur += step
 
-    if not created:
-        raise HTTPException(400, "Nessuno slot generato")
+    created = 0
+    if to_insert:
+        db.add_all(to_insert)
+        db.commit()
+        created = len(to_insert)
 
-    db.commit()
-    return {"ok": True, "created": created}
+    # non alzare eccezioni: torna conteggi chiari per l’UI
+    return {"ok": True, "created": created, "skipped": skipped}
 
 
 @router.get("/manager/slots", response_model=List[SlotOut])
