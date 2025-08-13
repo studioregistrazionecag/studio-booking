@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Accedi — Studio Booking</title>
+    <title>Accedi</title>
     <link rel="stylesheet" href="/frontend/assets/styles.css">
     <script src="/frontend/assets/ui.js"></script>
   </head>
@@ -15,7 +15,7 @@
         <p class="muted">Inserisci le tue credenziali per continuare.</p>
         <div class="grid-1">
           <div class="field"><label class="label" for="email">Email</label>
-            <div class="input-group"><input id="email" class="input" type="email" placeholder="you@example.com" autocomplete="email"></div>
+            <div class="input-group"><input id="email" class="input" type="email" placeholder="tu@esempio.com" autocomplete="email"></div>
           </div>
           <div class="field"><label class="label" for="pwd">Password</label>
             <div class="input-group"><input id="pwd" class="input has-eye" type="password" placeholder="Password" autocomplete="current-password"><button type="button" class="eye" aria-label="Mostra password" onclick="togglePwd('pwd', this)">👁</button></div>
@@ -78,6 +78,6 @@
       document.getElementById('pwd').addEventListener('keydown', e => {
         if (e.key === 'Enter') doLogin();
       });
-    </script>undefined
-  </body>undefined
+    </script>
+  </body>
 </html>
