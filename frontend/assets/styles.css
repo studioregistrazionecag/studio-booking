@@ -278,26 +278,20 @@ a:hover{text-decoration:underline}
   font-weight: 500;
 }
 
-/* --- firma dev (auth) --- */
-.auth-footer{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 14px;
+.auth-signature {
+  margin-top: 12px;
   text-align: center;
   font-size: 12px;
   color: rgba(255,255,255,0.55);
-  pointer-events: auto;
-  z-index: 5;
 }
 
-.auth-footer a{
+.auth-signature a {
   color: rgba(255,255,255,0.75);
   text-decoration: none;
   border-bottom: 1px dotted rgba(255,255,255,0.25);
 }
 
-.auth-footer a:hover{
+.auth-signature a:hover {
   color: #fff;
   border-bottom-color: rgba(255,255,255,0.6);
 }
